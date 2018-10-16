@@ -24,28 +24,28 @@ print "Sum of List - " + str(l) + " = " +  str(addList.add(l))
 
 ```C
 //Python.h has all the required function definitions to manipulate the Python objects
-#include <Python.h>
+#include <python.h>
 
 //This is the function that is called from your python code
-static PyObject* addList_add(PyObject* self, PyObject* args){
+static PyObject* addList_add(PyObject* self, PyObject* args){ //M1：addList为module名， add为函数名
 
     PyObject * listObj;
-
+	long length, elem;
+	int i, sum;
     //The input arguments come as a tuple, we parse the args to get the various variables
     //In this case it's only one list variable, which will now be referenced by listObj
     if (! PyArg_ParseTuple( args, "O", &listObj ))
         return NULL;
-
-    //length of the list
-    long length = PyList_Size(listObj);
+    
+	length= PyList_Size(listObj);
 
     //iterate over all the elements
-    int i, sum =0;
+	sum=0;
     for (i = 0; i < length; i++) {
         //get an element out of the list - the element is also a python objects
         PyObject* temp = PyList_GetItem(listObj, i);
         //we know that object represents an integer - so convert it into C long
-        long elem = PyInt_AsLong(temp);
+        elem = PyLong_AsLong(temp);
         sum += elem;
     }
 
@@ -56,27 +56,37 @@ static PyObject* addList_add(PyObject* self, PyObject* args){
 }
 
 //This is the docstring that corresponds to our 'add' function.
-static char addList_docs[] =
+static char addList_docs[] =                //M2：此处addList为module名，需与M1处对应
 "add(  ): add all elements of the list\n";
 
 /* This table contains the relavent info mapping -
    <function-name in python module>, <actual-function>,
    <type-of-args the function expects>, <docstring associated with the function>
  */
-static PyMethodDef addList_funcs[] = {
-    {"add", (PyCFunction)addList_add, METH_VARARGS, addList_docs},
-    {NULL, NULL, 0, NULL}
+static PyMethodDef addList_funcs[] = {    ////此处addList为module名，需与M1处对应
+    {"add", addList_add, METH_VARARGS, addList_docs},    //此处add为函数名,需与M1处add对应，addList_add与M1处对应
+    {NULL, NULL, 0, NULL}       //此行为结束标识
 
+};
+
+static struct PyModuleDef addListModule = {     //此处为M1处的Module名+Module
+    PyModuleDef_HEAD_INIT,
+    "addList",   /* name of module */
+    addList_docs, /* module documentation, may be NULL */
+    -1,       /* size of per-interpreter state of the module,
+                 or -1 if the module keeps state in global variables. */
+    addList_funcs
 };
 
 /*
    addList is the module name, and this is the initialization block of the module.
    <desired module name>, <the-info-table>, <module's-docstring>
  */
-PyMODINIT_FUNC initaddList(void){
-    Py_InitModule3("addList", addList_funcs,
-            "Add all ze lists");
 
+PyMODINIT_FUNC
+PyInit_addList(void)
+{
+    return PyModule_Create(&addListModule);
 }
 
 ```
@@ -138,3 +148,15 @@ Sum of List - [1, 2, 3, 4, 5] = 15
 如你所见，我们已经使用Python.h API成功开发出了我们第一个Python C扩展。这种方法看似复杂，但你一旦习惯，它将变的非常有效。
 
 Python调用C代码的另一种方式便是使用[Cython](http://cython.org/)让Python编译的更快。但是Cython和传统的Python比起来可以将它理解为另一种语言，所以我们就不在这里过多描述了。
+
+#Note By WHK
+在生成动态文件时需注意以下几点：
+1.在VS2010中将项目配置中的配置属性->VC++目录中包含目录改为python3下的include，库目录改为python3下的libs目录（不是Lib目录）；链接器->输入中的附加依赖项修改为libs目录中的python37.lib
+可参考：https://www.cnblogs.com/chengxuyuancc/p/6374239.html
+2.在VS2010中取消编译头，C/C++->预编译头->不使用预编译头
+可参考：https://blog.csdn.net/mj511099781/article/details/12994925
+3.如遇到缺少inttypes.h时，可下载之，保存到VS2010下的VC目录下，includes中
+4.在编译时出现重复定义的情况可以将重复的部分注释掉
+5.生成DLL文件后，将后缀改为.pyd即可在python中import
+6.还需要注意的一点就是64位的python需要配合64位的VS使用，两者需保持一致。调整VS2010为x64版本可参考以下链接
+可参考：https://jingyan.baidu.com/article/7082dc1c3f3f41e40a89bd81.html
