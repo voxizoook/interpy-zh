@@ -150,6 +150,7 @@ Sum of List - [1, 2, 3, 4, 5] = 15
 Python调用C代码的另一种方式便是使用[Cython](http://cython.org/)让Python编译的更快。但是Cython和传统的Python比起来可以将它理解为另一种语言，所以我们就不在这里过多描述了。
 
 注：
+
 采用VS2010时32位python对应32位VS，64位对应64位VS
 
 在编译器->编译头文件中取消使用预编译头文件
