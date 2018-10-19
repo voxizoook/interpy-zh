@@ -24,28 +24,28 @@ print "Sum of List - " + str(l) + " = " +  str(addList.add(l))
 
 ```C
 //Python.h has all the required function definitions to manipulate the Python objects
-#include <Python.h>
+#include <python.h>
 
 //This is the function that is called from your python code
 static PyObject* addList_add(PyObject* self, PyObject* args){
 
     PyObject * listObj;
-
+	long length, elem;
+	int i, sum;
     //The input arguments come as a tuple, we parse the args to get the various variables
     //In this case it's only one list variable, which will now be referenced by listObj
     if (! PyArg_ParseTuple( args, "O", &listObj ))
         return NULL;
-
-    //length of the list
-    long length = PyList_Size(listObj);
+    
+	length= PyList_Size(listObj);
 
     //iterate over all the elements
-    int i, sum =0;
+	sum=0;
     for (i = 0; i < length; i++) {
         //get an element out of the list - the element is also a python objects
         PyObject* temp = PyList_GetItem(listObj, i);
         //we know that object represents an integer - so convert it into C long
-        long elem = PyInt_AsLong(temp);
+        elem = PyLong_AsLong(temp);
         sum += elem;
     }
 
@@ -64,19 +64,29 @@ static char addList_docs[] =
    <type-of-args the function expects>, <docstring associated with the function>
  */
 static PyMethodDef addList_funcs[] = {
-    {"add", (PyCFunction)addList_add, METH_VARARGS, addList_docs},
+    {"add", addList_add, METH_VARARGS, addList_docs},
     {NULL, NULL, 0, NULL}
 
+};
+
+static struct PyModuleDef addListModule = {
+    PyModuleDef_HEAD_INIT,
+    "addList",   /* name of module */
+    addList_docs, /* module documentation, may be NULL */
+    -1,       /* size of per-interpreter state of the module,
+                 or -1 if the module keeps state in global variables. */
+    addList_funcs
 };
 
 /*
    addList is the module name, and this is the initialization block of the module.
    <desired module name>, <the-info-table>, <module's-docstring>
  */
-PyMODINIT_FUNC initaddList(void){
-    Py_InitModule3("addList", addList_funcs,
-            "Add all ze lists");
 
+PyMODINIT_FUNC
+PyInit_addList(void)
+{
+    return PyModule_Create(&addListModule);
 }
 
 ```
@@ -138,3 +148,8 @@ Sum of List - [1, 2, 3, 4, 5] = 15
 如你所见，我们已经使用Python.h API成功开发出了我们第一个Python C扩展。这种方法看似复杂，但你一旦习惯，它将变的非常有效。
 
 Python调用C代码的另一种方式便是使用[Cython](http://cython.org/)让Python编译的更快。但是Cython和传统的Python比起来可以将它理解为另一种语言，所以我们就不在这里过多描述了。
+
+注：
+采用VS2010时32位python对应32位VS，64位对应64位VS
+在编译器->编译头文件中取消使用预编译头文件
+若出现重复定义的问题，可以将对应宏定义注释掉
